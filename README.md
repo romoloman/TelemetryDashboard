@@ -25,7 +25,7 @@ To build this project, you will need:
 * A "Cheap Yellow Display" module (typically ESP32 with a 2.8" or 3.2" TFT display).
 * An FrSky receiver with telemetry support (S.Port or D8).
 * Connection wires for the serial port (UART) between the display and the receiver.
-* A power source for the Cheap Yellow Display (usually micro USB).
+* A power source for the Cheap Yellow Display you can use either the USB or the proper connector on the board.
 * 1 3.3k resistor and 1 10k resistor to be able to read tx battery voltage.
 
 ## Software Requirements
@@ -48,7 +48,8 @@ To build this project, you will need:
 
 ## Usage
 
-After uploading the code and connecting the FrSky receiver correctly (ensure the receiver is powered and connected to your radio), the display should power on and begin showing telemetry data as it is received.
+After uploading the code and connecting the display to the FrSky module correctly (ensure the receiver is powered and connected to your radio), the display should power on and begin showing telemetry data as it is received.
+You can scroll the display on the left or on the right to display different telemetry screens
 
 Make sure your FrSky receiver is configured to output telemetry and that your radio is powered on and bound.
 
