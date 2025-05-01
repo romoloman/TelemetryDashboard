@@ -6,7 +6,7 @@ A project to display telemetry data from FrSky receivers (S.Port and D8 protocol
 
 This repository contains the code and instructions to turn a simple ESP32-based "Cheap Yellow Display" into a practical telemetry screen for FrSky radio systems. It allows you to display essential flight parameters in real-time, such as battery voltage, RSSI signal strength, altitude, speed, and other data transmitted by FrSky receivers supporting S.Port or D8 protocols.
 
-The goal is to provide an affordable and easy-to-build solution for having a separate telemetry display or one integrated into vintage radio convesione.
+The goal is to provide an affordable and easy-to-build solution for having a separate telemetry display or one integrated into vintage radio conversions.
 
 ## Key Features
 
@@ -31,8 +31,8 @@ To build this project, you will need:
 ## Software Requirements
 
 * Arduino IDE (or another development environment for ESP32).
-* Necessary libraries for display management (e.g., TFT_eSPI and LVGL 9.2)
-* Necessary libraries for telemetry (have a look to https://github.com/romoloman/FrSkySportTelemetry )
+* Necessary libraries for display management (e.g., ArduinoJson (7+), TFT_eSPI and LVGL 9.2)
+* Necessary library for telemetry (have a look to https://github.com/romoloman/FrSkySportTelemetry )
 * EEZ Studio to customize the interface
   
 ## Installation and Setup
@@ -40,11 +40,13 @@ To build this project, you will need:
 1.  Clone this repository to your computer.
 2.  Open the project in your preferred development environment (e.g., Arduino IDE with ESP32 support installed).
 3.  Install the required libraries (check the specific instructions in the code or accompanying documentation).
-4.  Connect your Cheap Yellow Display to your computer via USB.
-5.  Connect the telemetry output of your FrSky receiver to the UART input on the ESP32 of the Cheap Yellow Display IO27.
-6.  Coonect the 3.3k resistor between ground and IO35
-7.  Connect a small 8 Ohm 3W speaker on audio port of the chaep yelllow display
-8.  Upload the code to your Cheap Yellow Display.
+4.  Configure TFT_eSPI copying the user_setup.h in your TFT_eSPI library folder, normally Documents/arduino/library/TFT_eSPI/
+5.  Configure lvgh copying the lv_conf.h in the library folder, normally Documents/arduino/library/
+6.  Connect your Cheap Yellow Display to your computer via USB.
+7.  Connect the telemetry output of your FrSky receiver to the UART input on the ESP32 of the Cheap Yellow Display IO27.
+8.  Coonect the 3.3k resistor between ground and IO35
+9.  Connect a small 8 Ohm 3W speaker on audio port of the chaep yelllow display
+10.  Upload the code to your Cheap Yellow Display.
 
 ## Usage
 
