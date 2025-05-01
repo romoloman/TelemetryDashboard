@@ -33,7 +33,7 @@ To build this project, you will need:
 * Arduino IDE (or another development environment for ESP32).
 * Necessary libraries for display management (e.g., TFT_eSPI and LVGL 9.2)
 * Necessary libraries for telemetry (have a look to https://github.com/romoloman/FrSkySportTelemetry )
-* EEZ Studio to customize the intervace
+* EEZ Studio to customize the interface
   
 ## Installation and Setup
 
