@@ -156,12 +156,12 @@ QueueHandle_t audio_event_queue;
 #include "rxbattlow.h"
 
 // Definitions for frequency and interval ranges (to be calibrated!)
-#define VEL_THRESHOLD 0.1     // Threshold to consider actual ascent/descent
-#define VEL_MAX_SALITA 10.0   // m/s, maximum mapped velocity for ascent
-#define VEL_MAX_DISCESA 10.0  // m/s, maximum mapped velocity for descent (absolute value)
+#define VEL_THRESHOLD 0.1    // Threshold to consider actual ascent/descent
+#define VEL_MAX_SALITA 5.0   // m/s, maximum mapped velocity for ascent
+#define VEL_MAX_DISCESA 5.0  // m/s, maximum mapped velocity for descent (absolute value)
 
 #define FREQ_MIN_SALITA 600       // Hz, lowest beep frequency for ascent
-#define FREQ_MAX_SALITA 1500      // Hz, highest beep frequency for ascent
+#define FREQ_MAX_SALITA 3000      // Hz, highest beep frequency for ascent
 #define INTERVAL_MIN_SALITA 100   // ms, shortest interval between beeps for ascent
 #define INTERVAL_MAX_SALITA 1000  // ms, longest interval between beeps for ascent
 #define DURATA_BEEP_MS 80         // ms, duration of each single beep for ascent
@@ -181,14 +181,29 @@ float map_range(float x, float in_min, float in_max, float out_min, float out_ma
 }
 
 // Function to play an array of samples (for "Telemetry lost") - Adapted for Arduino
-void play_audio_sample(const unsigned char *sample_data, unsigned int sample_len, int sample_rate) {
-  unsigned int sample_interval_us = 1000000 / sample_rate;
-
-  for (unsigned int i = 0; i < sample_len; i++) {
-    dacWrite(DAC_PIN_AUDIO, (unsigned int)(128 + (((float)sample_data[i]-128.0) * volume) / 100));
-    delayMicroseconds(sample_interval_us);
+void play_audio_sample(const unsigned char *sample_data, unsigned int sample_len, unsigned int sample_rate) {
+  if (sample_rate = 0) {
+    return;
   }
-  // Outputting zero at the end will be handled by the main loop of the variometer task
+  unsigned int sample_interval_us = 1000000 / sample_rate;
+  const unsigned int YIELD_DURATION_US = 10000;
+  unsigned int samples_per_yield;
+  if (sample_interval_us > 0) {
+    samples_per_yield = YIELD_DURATION_US / sample_interval_us;
+  }
+  if (samples_per_yield == 0) {
+    samples_per_yield = 1;
+  }
+  int samples_processed_since_yield = 0;
+  for (unsigned int i = 0; i < sample_len; i++) {
+    dacWrite(DAC_PIN_AUDIO, (uint8_t)(128 + (((float)sample_data[i] - 128.0) * volume) / 100.0));  // Ho aggiunto .0 per assicurare float division
+    delayMicroseconds(sample_interval_us);
+    samples_processed_since_yield++;
+    if (samples_processed_since_yield >= samples_per_yield) {
+      vTaskDelay(pdMS_TO_TICKS(1));
+      samples_processed_since_yield = 0;
+    }
+  }
 }
 
 void play_sine_waveform(int frequency, int duration_us) {
@@ -299,7 +314,7 @@ void audio_variometro_task(void *pvParameters) {
 #if LV_USE_LOG != 0
 void my_print(lv_log_level_t level, const char *buf) {
   LV_UNUSED(level);
-#if DEBUG  
+#if DEBUG
   Serial.println(buf);
   Serial.flush();
 #endif
@@ -349,9 +364,9 @@ void setup() {
   // Load configuration from SPIFFS
   JsonDocument doc;
   if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-#if DEBUG    
+#if DEBUG
     Serial.println("Opening config.. ");
-#endif    
+#endif
     if (SPIFFS.exists("/system.conf")) {
       File file = SPIFFS.open("/system.conf", FILE_READ);
       if (file) {
@@ -369,14 +384,22 @@ void setup() {
 #if DEBUG
           // --- INIZIO DEBUG: Stampa i valori letti ---
           Serial.println("\nConfiguration values: ");
-          Serial.print("telemetryprotocol: "); Serial.println(telemetryprotocol);
-          Serial.print("luminosity: "); Serial.println(luminosity);
-          Serial.print("volume: "); Serial.println(volume);
-          Serial.print("vario: "); Serial.println(vario ? "true" : "false"); // Stampa true/false per il booleano
-          Serial.print("battrxalarm: "); Serial.println(battrxalarm);
-          Serial.print("batttxalarm: "); Serial.println(batttxalarm);
-          Serial.print("rssilowvalue: "); Serial.println(rssilowvalue);
-          Serial.print("rssicritvalue: "); Serial.println(rssicritvalue);
+          Serial.print("telemetryprotocol: ");
+          Serial.println(telemetryprotocol);
+          Serial.print("luminosity: ");
+          Serial.println(luminosity);
+          Serial.print("volume: ");
+          Serial.println(volume);
+          Serial.print("vario: ");
+          Serial.println(vario ? "true" : "false");  // Stampa true/false per il booleano
+          Serial.print("battrxalarm: ");
+          Serial.println(battrxalarm);
+          Serial.print("batttxalarm: ");
+          Serial.println(batttxalarm);
+          Serial.print("rssilowvalue: ");
+          Serial.println(rssilowvalue);
+          Serial.print("rssicritvalue: ");
+          Serial.println(rssicritvalue);
           // --- FINE DEBUG ---
 #endif
         } else {
@@ -387,15 +410,15 @@ void setup() {
         }
       } else {
 #if DEBUG
-        Serial.println("Opening config failed ");  
-#endif        
-        saveconf();                                   // Save default config if file open fails
+        Serial.println("Opening config failed ");
+#endif
+        saveconf();  // Save default config if file open fails
       }
     } else {
 #if DEBUG
       Serial.println("Config file not existing ");
 #endif
-      saveconf();                                    // Save default config if file doesn't exist
+      saveconf();  // Save default config if file doesn't exist
     }
   }
 
@@ -419,9 +442,9 @@ void setup() {
 
   // Integrate EEZ Studio GUI (initialize UI elements based on definition)
   ui_init();
-  analogWrite(21, luminosity);   // Set screen brightness
-  pinMode(4, OUTPUT);            // Configure pin 4 as output
-  digitalWrite(4, 1);            // Set pin 4 high
+  analogWrite(21, luminosity);  // Set screen brightness
+  pinMode(4, OUTPUT);           // Configure pin 4 as output
+  digitalWrite(4, 1);           // Set pin 4 high
 
   //setup hw pins
   pinMode(TXBATT_PIN, INPUT);
@@ -456,8 +479,8 @@ void setup() {
   }
 
   // Set initial values for UI sliders and labels based on loaded config
-  lv_slider_set_value(objects.luxvalue, luminosity, LV_ANIM_OFF);               // Set luminosity slider
-  lv_slider_set_value(objects.volvalue, volume, LV_ANIM_OFF);                   // Set volume slider
+  lv_slider_set_value(objects.luxvalue, luminosity, LV_ANIM_OFF);                 // Set luminosity slider
+  lv_slider_set_value(objects.volvalue, volume, LV_ANIM_OFF);                     // Set volume slider
   lv_slider_set_value(objects.alarmvalue, (int)(battrxalarm * 10), LV_ANIM_OFF);  // Set RxBatt alarm slider
   sprintf(buffer, "%0.1f", battrxalarm);
   lv_label_set_text(objects.alarmvaluelabel, buffer);                               // Update RxBatt alarm label
@@ -480,7 +503,7 @@ void setup() {
 
   vspeed = 0.0;  // Initialize vertical speed to zero
   analogReadResolution(12);
-  txbattvalue = ((analogRead(TXBATT_PIN)*TXBATTPARTRATIO)/4095) ;
+  txbattvalue = ((analogRead(TXBATT_PIN) * TXBATTPARTRATIO) / 4095);
   // Create audio event queue and task
   audio_event_queue = xQueueCreate(10, sizeof(audio_event_t));  // Create a queue for 10 audio events
   if (audio_event_queue != NULL) {                              // Check if queue creation was successful
@@ -497,7 +520,6 @@ void setup() {
   // Send startup audio event
   audio_event_t event = AUDIO_EVENT_PLAY_STARTUP;
   xQueueSend(audio_event_queue, &event, 0);
-  
 }
 
 void saveconf() {
@@ -517,7 +539,9 @@ void saveconf() {
     file.close();
 #if DEBUG
     Serial.println("\nConfiguration saved");
-#endif    
+  } else {
+    Serial.println("\nAlert: Configuration notsaved");
+#endif
   }
 }
 
@@ -526,12 +550,12 @@ float value;  // Variable to temporarily store telemetry values
 unsigned long now;
 void loop() {
   // Main program loop
-  now=millis();
+  now = millis();
   if ((now - lasttxbattupdate) > 1000ull) {
-    lasttxbattupdate=now;
-    txbattvalue = (txbattvalue * 4 +((analogRead(TXBATT_PIN)*TXBATTPARTRATIO)/4095))/5 ;
+    lasttxbattupdate = now;
+    txbattvalue = (txbattvalue * 4 + ((analogRead(TXBATT_PIN) * TXBATTPARTRATIO) / 4095)) / 5;
     sprintf(buffer, "%0.1f", txbattvalue);
-    lv_label_set_text(objects.txbattbigtext, buffer);      // Update RxBatt text
+    lv_label_set_text(objects.txbattbigtext, buffer);  // Update RxBatt text
     if (txbattvalue < batttxalarm && ((now - lasttxbattalarm) > MINREPEATTIME)) {
       lasttxbattalarm = now;
       audio_event_t event = AUDIO_EVENT_PLAY_TXBATTLOW;
@@ -551,16 +575,20 @@ void loop() {
         lv_label_set_text(objects.rssivalue, buffer);                  // Update RSSI value text
         if (value != 0) {
           lastupdate = now;  // Record last update time if value is valid
-        }
-        // Check and trigger RSSI critical/low alarms
-        if (value < rssicritvalue && ((now - lastrssicritalarm) > MINREPEATTIME)) {
-          lastrssicritalarm = now;
-          audio_event_t event = AUDIO_EVENT_PLAY_RSSICRIT;
-          xQueueSend(audio_event_queue, &event, 0);
-        } else if (value < rssilowvalue && ((now - lastrssilowalarm) > MINREPEATTIME)) {
-          lastrssilowalarm = now;
-          audio_event_t event = AUDIO_EVENT_PLAY_RSSILOW;
-          xQueueSend(audio_event_queue, &event, 0);
+          // Check and trigger RSSI critical/low alarms
+          if (value < rssicritvalue) {
+            if ((now - lastrssicritalarm) > MINREPEATTIME) {
+              lastrssicritalarm = now;
+              audio_event_t event = AUDIO_EVENT_PLAY_RSSICRIT;
+              xQueueSend(audio_event_queue, &event, 0);
+            }
+          } else if (value < rssilowvalue) {
+            if ((now - lastrssilowalarm) > MINREPEATTIME) {
+              lastrssilowalarm = now;
+              audio_event_t event = AUDIO_EVENT_PLAY_RSSILOW;
+              xQueueSend(audio_event_queue, &event, 0);
+            }
+          }
         }
         break;
       case 0xF102:  // ADC1 data
@@ -681,14 +709,18 @@ void loop() {
       value = rssiRx;    // Get RSSI value
       if (value != 0) {
         // Check and trigger RSSI critical/low alarms
-        if (value < rssicritvalue && ((now - lastrssicritalarm) > MINREPEATTIME)) {
-          lastrssicritalarm = now;
-          audio_event_t event = AUDIO_EVENT_PLAY_RSSICRIT;
-          xQueueSend(audio_event_queue, &event, 0);
-        } else if (value < rssilowvalue && ((now - lastrssilowalarm) > MINREPEATTIME)) {
-          lastrssilowalarm = now;
-          audio_event_t event = AUDIO_EVENT_PLAY_RSSILOW;
-          xQueueSend(audio_event_queue, &event, 0);
+        if (value < rssicritvalue) {
+          if ((now - lastrssicritalarm) > MINREPEATTIME) {
+            lastrssicritalarm = now;
+            audio_event_t event = AUDIO_EVENT_PLAY_RSSICRIT;
+            xQueueSend(audio_event_queue, &event, 0);
+          }
+        } else if (value < rssilowvalue) {
+          if ((now - lastrssilowalarm) > MINREPEATTIME) {
+            lastrssilowalarm = now;
+            audio_event_t event = AUDIO_EVENT_PLAY_RSSILOW;
+            xQueueSend(audio_event_queue, &event, 0);
+          }
         }
         lastupdate = now;  // Record last update time if value is valid
       }
@@ -723,6 +755,8 @@ void loop() {
     if (alertvisible == true) {
       lv_obj_add_flag(objects.alertlabel, LV_OBJ_FLAG_HIDDEN);  // Hide telemetry lost alert
       alertvisible = false;
+      audio_event_t event = AUDIO_EVENT_PLAY_TELEMETRY_RECOVERED;  // Trigger telemetry lost audio
+      xQueueSend(audio_event_queue, &event, 0);
       // Note: Telemetry recovered audio event is likely triggered elsewhere upon first valid data
     }
   }
