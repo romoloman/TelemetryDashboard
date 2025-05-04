@@ -41,7 +41,7 @@ To build this project, you will need:
 2.  Open the project in your preferred development environment (e.g., Arduino IDE with ESP32 support installed).
 3.  Install the required libraries (check the specific instructions in the code or accompanying documentation).
 4.  Configure TFT_eSPI copying the user_setup.h in your TFT_eSPI library folder, normally Documents/arduino/library/TFT_eSPI/
-5.  Configure lvgh copying the lv_conf.h in the library folder, normally Documents/arduino/library/
+5.  Configure lvgl copying the lv_conf.h in the library folder, normally Documents/arduino/library/
 6.  Connect your Cheap Yellow Display to your computer via USB.
 7.  Connect the telemetry output of your FrSky module to the UART input on the ESP32 of the Cheap Yellow Display - IO27.
 8.  Connect the 3.3k resistor between ground and IO35
