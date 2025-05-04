@@ -24,7 +24,7 @@ To build this project, you will need:
 
 * A "Cheap Yellow Display" module (typically ESP32 with a 2.8" or 3.2" TFT display).
 * An FrSky receiver with telemetry support (S.Port or D8).
-* Connection wires for the serial port (UART) between the display and the receiver.
+* Connection wires for the serial port (UART) between the display and the tx module.
 * A power source for the Cheap Yellow Display you can use either the USB or the proper connector on the board.
 * 1 3.3k resistor and 1 10k resistor to be able to read tx battery voltage.
 
@@ -43,9 +43,9 @@ To build this project, you will need:
 4.  Configure TFT_eSPI copying the user_setup.h in your TFT_eSPI library folder, normally Documents/arduino/library/TFT_eSPI/
 5.  Configure lvgh copying the lv_conf.h in the library folder, normally Documents/arduino/library/
 6.  Connect your Cheap Yellow Display to your computer via USB.
-7.  Connect the telemetry output of your FrSky receiver to the UART input on the ESP32 of the Cheap Yellow Display IO27.
-8.  Coonect the 3.3k resistor between ground and IO35
-9.  Connect a small 8 Ohm 3W speaker on audio port of the chaep yelllow display
+7.  Connect the telemetry output of your FrSky module to the UART input on the ESP32 of the Cheap Yellow Display - IO27.
+8.  Connect the 3.3k resistor between ground and IO35
+9.  Connect a small 8 Ohm 3W speaker on audio port of the chaep yellow display
 10.  Upload the code to your Cheap Yellow Display.
 
 ## Usage
